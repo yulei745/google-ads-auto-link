@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "amqplib": "^0.10.5",
+    "axios": "^1.7.7",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^23.4.0",
+    "url-parse": "^1.5.10"
+  }
+}
