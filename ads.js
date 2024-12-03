@@ -69,11 +69,16 @@ async function bitbrowser() {
 
 
 async function main(ads) {
-    const data = await fetch('http://localhost:9222/json/version')
-        .then(response => response.json());
+    // const data = await fetch('http://localhost:9222/json/version')
+    //     .then(response => response.json());
+
+    const url = new URLSearchParams(ads.adsurl.split('?')?.[1]);
+    // console.log(url.get('ocid'));
+
+    const data = await getBrowser(url.get('ocid'))
 
     const browser =  await puppeteer.connect({
-        browserWSEndpoint: data.webSocketDebuggerUrl,
+        browserWSEndpoint: data.ws,
         defaultViewport: null
     });
 

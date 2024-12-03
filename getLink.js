@@ -10,7 +10,7 @@ module.exports = async function(cam) {
     const link = cam.offer;
     let browser_id;
 
-    const ipmart = config.ipmart.split(':');
+    const ipmart = link.ipmart;//config.ipmart.split(':');
 
     try {
         const random_windowname = 'auto-ads'; //generate_random_str()
