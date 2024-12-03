@@ -82,12 +82,10 @@ async function main(ads) {
         defaultViewport: null
     });
 
-    for(let ad of ads) {
-        try {
-            await replaceLink(browser, ad);
-        } catch (e) {
-            console.log('cid error:', e);
-        }
+    try {
+        await replaceLink(browser, ads);
+    } catch (e) {
+        console.log('cid error:', e);
     }
 }
 

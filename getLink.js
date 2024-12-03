@@ -6,11 +6,11 @@ const URLParse = require("url-parse");
 const fs = require("fs");
 
 module.exports = async function(cam) {
-    console.log(cam);
+    
     const link = cam.offer;
     let browser_id;
 
-    const ipmart = link.ipmart;//config.ipmart.split(':');
+    const ipmart = link.ipmart.split(':');//config.ipmart.split(':');
 
     try {
         const random_windowname = 'auto-ads'; //generate_random_str()
@@ -97,6 +97,7 @@ module.exports = async function(cam) {
 
         };
         const res = await bit.createBrowser(body);
+        console.log(res);
 
         if(!res.success) {
             return;
