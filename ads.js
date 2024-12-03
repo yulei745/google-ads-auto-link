@@ -177,8 +177,25 @@ async function replaceLink(browser, ad) {
 
 }
 
+
+async function switch_page(browser, search) {
+    // 获取所有已打开的页面
+    const pages = await browser.pages();
+    console.log('当前已打开的页面列表:');
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const url = await page.url();
+        console.log(`页面 ${i + 1}: ${url}`);
+    }
+    let page = pages.find(page => page.url().indexOf(search) > 0);
+    if(!page) return false;
+    await page.bringToFront();
+    return page;
+}
+
 module.exports = {
     main,
     bitbrowser,
-    getBrowser
+    getBrowser,
+    switch_page
 }

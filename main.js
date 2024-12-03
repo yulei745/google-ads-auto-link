@@ -210,8 +210,5 @@ const config = require('./config');
             }, i * 2000);
         }
     }
-
-    
-
 })();
 
