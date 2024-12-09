@@ -114,10 +114,9 @@ async function replaceLink(browser, ads) {
 
             const nodes = await Promise.all(
                 list.map(async node => {
-                    console.log(node);
                     try {
                         const listcampaignId = await page.evaluate(node => node.querySelector('ess-cell[essfield="campaign_id"]').textContent.trim(), node);
-                        const listcid = await page.evaluate(node => node.querySelector('ess-cell[essfield="entity_owner_info.descriptive_name"] a.ess-cell-link').textContent.trim(), node);
+                        const listcid = await page.evaluate(node => node.querySelector('ess-cell[essfield="entity_owner_info.descriptive_name"] a.ess-cell-link')?.textContent.trim(), node);
                         if (listcampaignId && listcid) {
                             return (listcid == ads.cid && cam.campaignId == listcampaignId) ? node : null;
                         }
