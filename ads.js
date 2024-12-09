@@ -101,10 +101,10 @@ async function replaceLink(browser, ads) {
     let page = await browser.newPage();
     await page.goto('https://ads.google.com/aw/campaigns?ocid=6840216126&euid=1208511802&uscid=6840216126&authuser=3&ascid=6840216126', {timeout: 120000});
 
-    for(let cam of ad.campaigns) {
+    for(let cam of ads.campaigns) {
         try {
 
-            cam.offer.finaurl = await getLink(cam);
+            cam.offer.finaurl = 'https://voila.ca/?irclickid=2xM1dRTidxyKWsb2KKXrE3p0UkCVeEzdrX5rW00&utm_medium=Impact&utm_source=affiliate&utm_campaign=FANSTOSHOP&irgwc=1';//await getLink(cam);
             if(!cam.offer.finaurl) {
                 return;
             }
@@ -117,11 +117,12 @@ async function replaceLink(browser, ads) {
 
             const nodes = await Promise.all(
                 list.map(async node => {
+                    console.log(node);
                     try {
-                        const listcampaignId = await page.evaluate(a => node.querySelector('ess-cell[essfield="campaign_id"]').textContent, node).trim();
-                        const listcid = await page.evaluate(a => node.querySelector('ess-cell[essfield="entity_owner_info.descriptive_name"] a.ess-cell-link').textContent, node).trim();
-                        if (campaignId && cid) {
-                            return (listcid == cid && campaignId == listcampaignId) ? node : null;
+                        const listcampaignId = await page.evaluate(node => node.querySelector('ess-cell[essfield="campaign_id"]').textContent.trim(), node);
+                        const listcid = await page.evaluate(node => node.querySelector('ess-cell[essfield="entity_owner_info.descriptive_name"] a.ess-cell-link').textContent.trim(), node);
+                        if (listcampaignId && listcid) {
+                            return (listcid == ads.cid && cam.campaignId == listcampaignId) ? node : null;
                         }
                     } catch (e) {
                         console.error("Error while processing node:", e);
