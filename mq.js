@@ -18,22 +18,17 @@ const { fork } = require('child_process');
             const content = msg.content.toString();
             const payload = JSON.parse(content);
 
-            // 创建一个新的子进程来处理该消息
-            const child = fork('./worker.js'); // worker.js 是处理消息的脚本
+            const child = fork('./worker.js'); 
 
-            // 向子进程发送消息
             child.send(payload);
 
-            // 监听子进程处理完成的消息
             child.on('message', (result) => {
 
                 console.log('子进程处理结果:', result);
-                // 确认消息已被处理
                 ch2.sendToQueue(queue1, Buffer.from(result.toString()));
                 ch1.ack(msg);
             });
 
-            // 监听子进程的错误
             child.on('error', (err) => {
                 console.error('子进程错误:', err);
                 ch2.sendToQueue(queue1, Buffer.from(err.toString()));

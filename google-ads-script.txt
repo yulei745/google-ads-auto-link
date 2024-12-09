@@ -1,0 +1,93 @@
+function main() {
+
+  //const data = runReport()
+  //console.log(data);
+  //makeHttpRequest(data);
+  
+  const data = getAllAccounts();
+  Object.keys(data).forEach(key => {
+    makeHttpRequest(data[key]);
+  });
+  
+}
+
+function runReport() {
+  // Google Ads reports return data faster than campaign management methods
+  //   and can be used to retrieve basic structural information on
+  //   your Account, Campaigns, AdGroups, Ads, Keywords, etc. You can refer to
+  //   https://developers.google.com/google-ads/api/docs/reporting/overview
+  //   for more details.
+
+  // See https://developers.google.com/google-ads/api/fields/latest/overview#list-of-all-resources
+  //   for all the supported report types.
+  // See https://developers.google.com/google-ads/api/docs/query/overview for
+  //   details on how to use GAQL, the query language for reports.
+  // See https://developers.google.com/google-ads/api/docs/reporting/uireports
+  //   for details on how to map an Google Ads UI feature to the corresponding
+  //   reporting API feature.
+  const searchResults = AdsApp.search(`select campaign.name, campaign.id, metrics.clicks, metrics.impressions, metrics.cost_micros from campaign`);
+
+  const data = [];
+  for (const row of searchResults) {
+    const campaignName = row.campaign.name;
+    const campaignId = row.campaign.id;
+    const clicks = row.metrics.clicks;
+    const impressions = row.metrics.impressions;
+    const cost = row.metrics.costMicros;
+    data.push({
+      campaignName,
+      campaignId,
+      clicks,
+      impressions,
+      cost
+    });
+    console.log(`${campaignName}, ${clicks}, ${impressions}, ${cost}`);
+  }
+  
+  return data;
+}
+
+
+function makeHttpRequest(data) {
+  var url = 'https://auto.huowei.com/api/google/ads/report'; // 替换为你的 API URL
+  var options = {
+    'method': 'post',  // 可选：'post', 'put', 'delete'
+    'headers': {
+      'Authorization': 'Bearer YOUR_ACCESS_TOKEN', // 根据需要设置头部
+      'Content-Type': 'application/json'
+    },
+    payload: JSON.stringify(data)
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var responseData = JSON.parse(response.getContentText());
+    Logger.log(responseData.foo);
+  } catch (error) {
+    Logger.log('Error: ' + error);
+  }
+}
+
+
+
+function getAllAccounts() {
+  const accountIterator = AdsManagerApp.accounts().get();
+  const accounts = {};
+  for (const account of accountIterator) {
+    const accountName = account.getName() ? account.getName() : '--';
+    console.log('%s,%s,%s,%s', account.getCustomerId(), accountName,
+        account.getTimeZone(), account.getCurrencyCode());
+    MccApp.select(account);
+    const reportData = runReport();
+    
+    const row = {
+      name: account.getName(),
+      customerid: account.getCustomerId(),
+      reportData
+    };
+    
+    accounts[account.getCustomerId()] = row;
+  }
+  
+  return accounts;
+}

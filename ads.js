@@ -35,13 +35,26 @@ async function getBrowser(name = 'google-ads'){
             page: 0,
             pageSize: 1
         });
+        let id = '';
         if(res.success && res.data.list.length) {
             const data = res.data.list.pop();
-            const openRes = await openBrowser({id: data.id});
-            if(openRes.success) {
-                return openRes.data;
+            id = data.id;
+        } else {
+            const res = await createBrowser({
+                proxyMethod: 2,
+                proxyType: 'noproxy',
+                browserFingerPrint: {},
+            });
+            if(res.success) {
+                id = res.data.id;
             }
         }
+
+        const openRes = await openBrowser({id});
+        if(openRes.success) {
+            return openRes.data;
+        }
+        return false;
     } catch (e) {
         console.error(e);
     }
@@ -69,13 +82,7 @@ async function bitbrowser() {
 
 
 async function main(ads) {
-    // const data = await fetch('http://localhost:9222/json/version')
-    //     .then(response => response.json());
-
-    const url = new URLSearchParams(ads.adsurl.split('?')?.[1]);
-    // console.log(url.get('ocid'));
-
-    const data = await getBrowser(url.get('ocid'))
+    const data = await getBrowser(ads.cid)
 
     const browser =  await puppeteer.connect({
         browserWSEndpoint: data.ws,
@@ -90,27 +97,31 @@ async function main(ads) {
 }
 
 
-async function replaceLink(browser, ad) {
+async function replaceLink(browser, ads) {
     let page = await browser.newPage();
-    await page.goto(ad.adsurl, {timeout: 120000});
+    await page.goto('https://ads.google.com/aw/campaigns?ocid=6840216126&euid=1208511802&uscid=6840216126&authuser=3&ascid=6840216126', {timeout: 120000});
 
     for(let cam of ad.campaigns) {
         try {
+
             cam.offer.finaurl = await getLink(cam);
             if(!cam.offer.finaurl) {
                 return;
             }
-            await page.waitForSelector('div.particle-table-row', {timeout: 120000});
+
+            await searchAds(page, cam.name);
+
+            await page.waitForSelector('div.particle-table-row', {timeout: 120000, visible: true});
+
             const list = await page.$$('div.particle-table-row');
 
             const nodes = await Promise.all(
                 list.map(async node => {
                     try {
-                        const a = await node.$('a.ess-cell-link');
-                        if (a) {
-                            const text = await page.evaluate(a => a.textContent, a);
-                            console.log(text);
-                            return text.trim() === cam.name ? node : null;
+                        const listcampaignId = await page.evaluate(a => node.querySelector('ess-cell[essfield="campaign_id"]').textContent, node).trim();
+                        const listcid = await page.evaluate(a => node.querySelector('ess-cell[essfield="entity_owner_info.descriptive_name"] a.ess-cell-link').textContent, node).trim();
+                        if (campaignId && cid) {
+                            return (listcid == cid && campaignId == listcampaignId) ? node : null;
                         }
                     } catch (e) {
                         console.error("Error while processing node:", e);
@@ -175,6 +186,27 @@ async function replaceLink(browser, ad) {
 
 }
 
+async function searchAds(page, camname) {
+    await page.waitForSelector('div[stickyclass="sticky"] dropdown-button > div.button', {timeout: 120000, visible: true});
+
+    const search = await page.$('div[stickyclass="sticky"] dropdown-button > div.button');
+
+    await search.click();
+
+    await utils.sleep(2000);
+
+    const input = Array.from(await page.$$('div.popup-wrapper')).filter(async node => {
+        const text = await page.evaluate(node => node.textContent, node);
+        return text.indexOf('查找广告') >= 0;
+    }).pop();
+
+    await input.type(camname);
+
+    await input.waitForSelector('material-select-dropdown-item', {timeout: 120000, visible: true});
+
+    const results = await page.$$('material-select-dropdown-item');
+    await results[0].click();
+}
 
 async function switch_page(browser, search) {
     // 获取所有已打开的页面
