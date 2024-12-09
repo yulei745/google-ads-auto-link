@@ -44,8 +44,12 @@ async function getBrowser(name = 'google-ads'){
             const res = await createBrowser(bitdata);
             if(res.success) {
                 id = res.data.id;
+            } else {
+                console.log(res);
             }
         }
+
+        console.log(id);
 
         const openRes = await openBrowser({id});
         if(openRes.success) {
@@ -95,13 +99,20 @@ async function main(ads) {
 
 
 async function replaceLink(browser, ads) {
-    let page = await browser.newPage();
+    let page;
+
+    page = await switch_page(browser, '6840216126');
+
+    if(!page) {
+        page = await browser.newPage();
+    }
+
     await page.goto('https://ads.google.com/aw/campaigns?ocid=6840216126&euid=1208511802&uscid=6840216126&authuser=3&ascid=6840216126', {timeout: 120000});
 
     for(let cam of ads.campaigns) {
         try {
 
-            cam.offer.finaurl = 'https://voila.ca/?irclickid=2xM1dRTidxyKWsb2KKXrE3p0UkCVeEzdrX5rW00&utm_medium=Impact&utm_source=affiliate&utm_campaign=FANSTOSHOP&irgwc=1';//await getLink(cam);
+            cam.offer.finaurl = await getLink(cam);
             if(!cam.offer.finaurl) {
                 return;
             }
@@ -136,17 +147,28 @@ async function replaceLink(browser, ads) {
 
             try {
                 console.log('find: ', cam.name);
-                const settingbtn = await node.$('material-button.edit-panel-icon-button');
-                await settingbtn.click();
 
-                await page.waitForSelector('material-button.additional-settings-button', {timeout: 120000});
-                const setting = await page.$('material-button.additional-settings-button');
-                await setting.click();
+                for(let i = 0; i < 3; i++) {
+                    try {
+                        const settingbtn = await node.$('material-button.edit-panel-icon-button');
+                        await settingbtn.click();
+                        await utils.sleep(1000);
+                        await page.waitForSelector('material-button.additional-settings-button', {timeout: 10000, visible: true});
+                        
+                        await utils.sleep(1000);
+                        const setting = await page.$('material-button.additional-settings-button');
+                        await setting.click();
+                        await utils.sleep(1000);
+                        break;
+                    } catch(e) {
+
+                    }
+                }
 
                 const campaignUrlSetting = await page.$('construction-plugin-panel[section_id="57.12"]');
-
                 const buttondecorator = await campaignUrlSetting.$('div[buttondecorator]');
                 await buttondecorator.click();
+                await utils.sleep(1000);
 
                 await campaignUrlSetting.waitForSelector('input');
                 const inputs = await campaignUrlSetting.$$('input');
@@ -157,6 +179,7 @@ async function replaceLink(browser, ads) {
                 await page.keyboard.press('A'); // 选择所有内容
                 await page.keyboard.up('Control'); // 释放 Ctrl 键
                 await page.keyboard.press('Backspace'); // 按下 Backspace 清空内容
+                await utils.sleep(1000);
 
                 await inputs[1].type(offerfinaurl[1]);
                 await page.mouse.wheel({ deltaY: 400 });  // 向下滚动 100px
@@ -222,8 +245,6 @@ async function switch_page(browser, search) {
 
 
 const bitdata = {
-    "code": "20241203171512654",
-    "groupId": "2c9bc0478e3a5344018e3b6d3f656e61",
     "platform": "",
     "platformIcon": "",
     "url": "https%3A%2F%2Fads.google.com%2Faw%2Fcampaigns%3Focid%3D6840216126%26ascid%3D6840216126%26euid%3D1208511802%26__u%3D7850129898%26uscid%3D6840216126%26__c%3D5073920974%26authuser%3D0",
