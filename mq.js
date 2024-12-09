@@ -1,6 +1,8 @@
 const amqplib = require('amqplib');
 const { fork } = require('child_process');
 
+let list = {};
+
 (async () => {
     const queue = 'auto-ads';
     const queue1 = 'message';
@@ -18,7 +20,16 @@ const { fork } = require('child_process');
             const content = msg.content.toString();
             const payload = JSON.parse(content);
 
-            const child = fork('./worker.js'); 
+            if(list[payload.cid]) {
+                ch1.ack(msg);
+                console.log('runing...');
+                return;
+            }
+
+            list[payload.cid] = true;
+ 
+            // 创建一个新的子进程来处理该消息
+            const child = fork('./worker.js'); // worker.js 是处理消息的脚本
 
             child.send(payload);
 
@@ -26,6 +37,7 @@ const { fork } = require('child_process');
 
                 console.log('子进程处理结果:', result);
                 ch2.sendToQueue(queue1, Buffer.from(result.toString()));
+                list[payload.cid] = false;
                 ch1.ack(msg);
             });
 

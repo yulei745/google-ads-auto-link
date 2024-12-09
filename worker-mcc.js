@@ -1,6 +1,8 @@
 const {getBrowser, switch_page} = require("./ads");
 const puppeteer = require("puppeteer");
 const utils = require("./utils");
+const {windowbounds} = require('./bit')
+
 const main = async () => {
     const data = await getBrowser('mcc')
 
@@ -36,11 +38,17 @@ const main = async () => {
 
 };
 
+
 process.on('message', async (message) => {
     // 这里是消息处理的逻辑
     console.log('正在处理中:', JSON.stringify(message));
 
-    await main();
+    // await windowbounds();
+    try {
+        await main();
+    } catch(e) {
+        console.log(e);
+    }
 
     process.send(`处理完成`);
     process.exit(0); // 子进程完成任务后退出

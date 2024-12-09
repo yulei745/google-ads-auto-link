@@ -97,7 +97,6 @@ module.exports = async function(cam) {
 
         };
         const res = await bit.createBrowser(body);
-        console.log(res);
 
         if(!res.success) {
             return;
@@ -108,7 +107,7 @@ module.exports = async function(cam) {
         console.log(browser_id);
         const data = {
             id: browser_id,
-            // args: ['--headless']
+            args: ['--headless']
         };
 
         const open_res = await bit.openBrowser(data); //--headless
@@ -155,21 +154,17 @@ module.exports = async function(cam) {
                 break;
             }
 
-            await utils.sleep(2000);
+            await utils.sleep(3000);
         }
 
         if(!find) {
             await bit.closeBrowser(browser_id);
-            await utils.sleep(2000);
             await bit.deleteBrowser(browser_id);
             return;
         }
 
-        setTimeout(async () => {
-            await bit.closeBrowser(browser_id);
-            await utils.sleep(2000);
-            await bit.deleteBrowser(browser_id);
-        });
+        await bit.closeBrowser(browser_id);
+        await bit.deleteBrowser(browser_id);
 
         return page.url();
 
